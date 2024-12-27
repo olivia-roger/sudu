@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sudoku Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            gap: 2px;
+            background-color: #666;
+            border: 3px solid #333;
+            padding: 3px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+        }
+        .cell:nth-child(3n) {
+            border-right: 2px solid #333;
+        }
+        .cell:nth-child(9n) {
+            border-right: none;
+        }
+        .cell:nth-child(3n + 1) {
+            border-left: 2px solid #333;
+        }
+        .board > div:nth-child(n+19):nth-child(-n+27),
+        .board > div:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #333;
+        }
+        .board > div:nth-child(-n+9) {
+            border-top: 2px solid #333;
+        }
+        .cell.selected {
+            background-color: #e3f2fd;
+        }
+        .cell.fixed {
+            color: #333;
+            font-weight: bold;
+        }
+        .cell.input {
+            color: #2196f3;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .numbers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .number-btn {
+            width: 45px;
+            height: 45px;
+            font-size: 24px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: white;
+            transition: all 0.2s;
+        }
+        .number-btn:hover {
+            background: #e3f2fd;
+        }
+        .number-btn:active {
+            background: #bbdefb;
+        }
+        .cell.error {
+            color: #f44336;
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .error-count {
+            font-size: 18px;
+            color: #f44336;
+            font-weight: bold;
+        }
+        .game-area {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .timer {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .leaderboard {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 200px;
+        }
+        .leaderboard h3 {
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .score-item:last-child {
+            border-bottom: none;
+        }
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        .timer, .error-count {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 3px;
+        }
+        .timer {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        .error-count {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .hint-btn {
+            background: #fff3e0;
+            color: #f57c00;
+            border: 1px solid #ffe0b2;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .hint-btn:hover {
+            background: #ffe0b2;
+        }
+        .cell.hint {
+            animation: highlight 1s infinite;
+        }
+        @keyframes highlight {
+            0%, 100% { background-color: white; }
+            50% { background-color: #fff3e0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="controls">
+            <button id="newGame">New Game</button>
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+            <button id="hint" class="hint-btn">💡 提示</button>
+        </div>
+        <div class="status-bar">
+            <div class="timer">⏱ <span id="timer">00:00</span></div>
+            <div class="error-count">❌ <span id="errorCount">0</span>/3</div>
+        </div>
+        <div class="game-area">
+            <div class="numbers">
+                <button class="number-btn">1</button>
+                <button class="number-btn">2</button>
+                <button class="number-btn">3</button>
+                <button class="number-btn">4</button>
+                <button class="number-btn">5</button>
+                <button class="number-btn">6</button>
+                <button class="number-btn">7</button>
+                <button class="number-btn">8</button>
+                <button class="number-btn">9</button>
+            </div>
+            <div id="board" class="board"></div>
+            <div class="leaderboard">
+                <h3>排行榜</h3>
+                <div id="scores"></div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html> 
